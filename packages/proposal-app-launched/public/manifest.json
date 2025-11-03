@@ -1,0 +1,20 @@
+{
+  "name": "HyTech Proposal App",
+  "short_name": "HyTech",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0f172a",
+  "icons": [
+    {
+      "src": "/LOGO-2017-edit-GOOD.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/LOGO-2017-edit-GOOD.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

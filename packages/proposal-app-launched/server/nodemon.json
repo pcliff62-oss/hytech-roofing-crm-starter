@@ -1,0 +1,14 @@
+{
+  "watch": ["*.js", "*.mjs"],
+  "ext": "js,json,mjs",
+  "ignore": [
+    "data.json",
+    "data.sqlite",
+    "server.log",
+    "node_modules",
+    "public",
+    "*.swp",
+    "*.log"
+  ],
+  "delay": "200"
+}

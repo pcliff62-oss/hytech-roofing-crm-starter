@@ -1,0 +1,5 @@
+{
+  "rewrites": [
+    { "source": "/api/:path*", "destination": "https://hytech-hi78.onrender.com/api/:path*" }
+  ]
+}
