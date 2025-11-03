@@ -38,6 +38,7 @@ __pycache__/
 .venv*/
 ai_worker/__pycache__/
 ai_worker/.venv*/
+.venv-ai-worker/
 
 # Misc
 *.local
