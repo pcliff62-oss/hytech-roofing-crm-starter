@@ -86,3 +86,4 @@ Plan aerial photo capture missions for future orthomosaic + roof metric generati
 Not yet included: actual DJI flight execution, real photogrammetry, or results visualization.
 
 See full documentation: `docs/DRONE_SCAN.md`
+# hytech-roofing-crm-starter.
