@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Node / Next.js
 node_modules/
 .next/
@@ -7,13 +8,21 @@ node_modules/
 # Build outputs
 build/
 dist/
+dist-ssr/
+dist/
 coverage/
 
 # Logs
+logs
+*.log
+logs
+*.log
+>>>>>>> origin/jesse-upload
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+<<<<<<< HEAD
 
 # OS / Editor
 .DS_Store
@@ -50,3 +59,22 @@ ai_worker/.venv*/
 public/uploads/
 public/assets/*.map
 packages/**/.unzipped/
+=======
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+>>>>>>> origin/jesse-upload
