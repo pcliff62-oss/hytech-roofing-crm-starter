@@ -4,6 +4,8 @@ import Today from './features/dashboard/Today.jsx'
 import CalendarScreen from './features/calendar/CalendarScreen.jsx'
 import AppointmentEditor from './features/calendar/AppointmentEditor.jsx'
 import CustomersScreen from './features/customers/CustomersScreen.jsx'
+import JobsList from './features/jobs/JobsList.jsx'
+import LeadsList from './features/leads/LeadsList.jsx'
 function LeadsScreen({ items = [] }) {
   return (
     <div className="space-y-2">
@@ -30,7 +32,7 @@ export default function App() {
   const [appts, setAppts] = useState([])
   const [customers, setCustomers] = useState([])
   const [leads, setLeads] = useState([])
-  const [view, setView] = useState({ id: 'home' }) // 'home' | 'appt-edit' | 'customer-detail'
+  const [view, setView] = useState({ id: 'home' }) // 'home' | 'appt-edit' | 'customer-detail' | 'jobs-list' | 'leads-list'
   const [draft, setDraft] = useState(null)
 
   useEffect(() => {
@@ -93,7 +95,17 @@ export default function App() {
     goHome()
   }
 
-  const title = view.id==='home' ? 'HyTech CRM' : (view.id==='appt-edit' ? (draft?.id? 'Edit appointment':'New appointment') : 'Customer')
+  const title = view.id==='home'
+    ? 'HyTech CRM'
+    : view.id==='appt-edit'
+      ? (draft?.id? 'Edit appointment':'New appointment')
+      : view.id==='customer-detail'
+        ? 'Customer'
+        : view.id==='jobs-list'
+          ? 'Jobs'
+          : view.id==='leads-list'
+            ? 'Leads'
+            : 'HyTech CRM'
   const showPlus = view.id==='home' && (tab==='calendar' || tab==='customers')
   return (
     <MobileShell title={title} onPlus={onPlus} onBack={view.id!=='home'? goHome:undefined} showPlus={showPlus} tab={tab} onTabChange={(t)=>{ setTab(t); if(view.id!=='home') goHome() }} frame="edge">
@@ -101,13 +113,65 @@ export default function App() {
         {view.id==='home' && (
           <>
             {tab === 'dashboard' && (
-              <Today
-                appts={appts}
-                customers={customers}
-                onOpenCalendar={() => setTab('calendar')}
-                onOpenCustomers={() => setTab('customers')}
-                onSelectCustomer={onSelectCustomer}
-              />
+              <>
+                {/* Top hero: centered logo + big category cards */}
+                <div className="flex flex-col items-center gap-5 mb-5">
+                  {/* Logo served from CRM app public/ to avoid duplicating assets */}
+                  <img
+                    src="http://127.0.0.1:3000/LOGO-2017-edit-GOOD.png"
+                    alt="HyTech Roofing"
+                    className="h-14 w-auto object-contain drop-shadow-md"
+                  />
+
+                  <div className="grid grid-cols-2 gap-4 w-full">
+                    {/* Jobs card */}
+                    <button
+                      onClick={() => setView({ id:'jobs-list' })}
+                      className="group relative rounded-2xl aspect-[4/3] overflow-hidden shadow-2xl active:scale-[0.99] transition-transform"
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-br from-[#0b1a2e] via-[#1773e6] to-[#60a5fa]" />
+                      <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_30%_20%,white_0%,transparent_40%),radial-gradient(circle_at_70%_80%,white_0%,transparent_45%)]" />
+                      <div className="absolute inset-0" style={{
+                        background:
+                          'linear-gradient(120deg, rgba(255,255,255,0.15), rgba(255,255,255,0) 60%)',
+                        transform:
+                          'perspective(600px) rotateX(8deg)'
+                      }} />
+                      <div className="relative h-full w-full flex flex-col items-center justify-center text-white">
+                        <div className="text-5xl drop-shadow-[0_6px_12px_rgba(0,0,0,0.35)]">🏗️</div>
+                        <div className="mt-2 font-semibold tracking-wide">Jobs</div>
+                      </div>
+                    </button>
+
+                    {/* Leads card */}
+                    <button
+                      onClick={() => setView({ id:'leads-list' })}
+                      className="group relative rounded-2xl aspect-[4/3] overflow-hidden shadow-2xl active:scale-[0.99] transition-transform"
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-br from-[#0b1a2e] via-[#4c1d95] to-[#c084fc]" />
+                      <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_70%_20%,white_0%,transparent_45%),radial-gradient(circle_at_30%_80%,white_0%,transparent_40%)]" />
+                      <div className="absolute inset-0" style={{
+                        background:
+                          'linear-gradient(120deg, rgba(255,255,255,0.15), rgba(255,255,255,0) 60%)',
+                        transform:
+                          'perspective(600px) rotateX(8deg)'
+                      }} />
+                      <div className="relative h-full w-full flex flex-col items-center justify-center text-white">
+                        <div className="text-5xl drop-shadow-[0_6px_12px_rgba(0,0,0,0.35)]">📇</div>
+                        <div className="mt-2 font-semibold tracking-wide">Leads</div>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+
+                <Today
+                  appts={appts}
+                  customers={customers}
+                  onOpenCalendar={() => setTab('calendar')}
+                  onOpenCustomers={() => setTab('customers')}
+                  onSelectCustomer={onSelectCustomer}
+                />
+              </>
             )}
             {tab === 'calendar' && <CalendarScreen appts={appts} onSelect={onSelectAppt} reload={() => fetchAppointments({ assignedTo: user.id }).then(setAppts)} />}
             {tab === 'leads' && <LeadsScreen items={leads} />}
@@ -117,6 +181,12 @@ export default function App() {
         )}
         {view.id==='appt-edit' && (
           <AppointmentEditor initial={draft} onSave={saveAppt} onCancel={goHome} onDelete={removeAppt} />
+        )}
+        {view.id==='jobs-list' && (
+          <JobsList items={appts} onSelect={onSelectAppt} />
+        )}
+        {view.id==='leads-list' && (
+          <LeadsList items={leads} onSelect={(l)=>{ /* optional: future details */ }} />
         )}
         {view.id==='customer-detail' && (
           <CustomerDetail initial={draft} onSave={saveCustomer} onCancel={goHome} onDelete={removeCustomer} />
