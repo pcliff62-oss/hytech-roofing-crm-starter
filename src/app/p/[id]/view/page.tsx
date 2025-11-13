@@ -871,6 +871,7 @@ export default function ProposalView({ params }: { params: { id: string } }) {
         const inputs = Array.from(container.querySelectorAll('input.proposal-price-checkbox')) as HTMLInputElement[];
         for (const input of inputs) {
           if (!input.isConnected) continue;
+          if (input.closest('[data-trim-total="1"], [data-trim-total-row="1"]')) continue;
           let label = input.closest('label.price-choice') as HTMLElement | null;
           // Derive amount from data-amount or try to parse from nearby text
           const getAmt = (): number => {
@@ -903,6 +904,7 @@ export default function ProposalView({ params }: { params: { id: string } }) {
             try { breakUnderlineForPill(pill); } catch {}
             try { removePlaceholderJunkAround(pill); } catch {}
           } else {
+            if (label.closest('[data-trim-total="1"], [data-trim-total-row="1"]')) continue;
             // Normalize existing pill: ensure input first then span shows a formatted $ amount
             const inputEl = label.querySelector('input.proposal-price-checkbox') as HTMLInputElement | null;
             if (inputEl && label.firstElementChild !== inputEl) {
@@ -1405,7 +1407,8 @@ export default function ProposalView({ params }: { params: { id: string } }) {
 
   // Trim section: detect table by explicit header or by presence of common Trim line labels
   function setupTrimSection() {
-      const rootEl = root as HTMLElement;
+    const TOTAL_RX = /TOTAL\s+INVESTMENT(?:\s*[:\-–—]\s*)?/i;
+    const rootEl = root as HTMLElement;
 
   // Always prepare Trim section even if not explicitly selected; visibility is handled elsewhere
 
@@ -1470,15 +1473,22 @@ export default function ProposalView({ params }: { params: { id: string } }) {
   let totalRow: HTMLElement | null = null;
       if (sectionHost.tagName === 'TABLE') {
         const rows = Array.from(sectionHost.querySelectorAll('tr')) as HTMLTableRowElement[];
-        totalRow = rows.find(r => /TOTAL\s+INVESTMENT\s*:/i.test(r.textContent || '')) || null;
+        totalRow = rows.find(r => TOTAL_RX.test(r.textContent || '')) || null;
       } else {
         totalRow = (Array.from(sectionHost.querySelectorAll('*')) as HTMLElement[])
-          .find(el => /TOTAL\s+INVESTMENT\s*:/i.test(el.textContent || '') && !Array.from(el.querySelectorAll('*')).some(ch => /TOTAL\s+INVESTMENT\s*:/i.test(ch.textContent || ''))) || null;
+          .find(el => TOTAL_RX.test(el.textContent || '') && !Array.from(el.querySelectorAll('*')).some(ch => TOTAL_RX.test(ch.textContent || ''))) || null;
       }
   // If no explicit TOTAL line is present, we still attach checkboxes and let the grand total reflect selections.
 
       // Remove any pills/inputs in that row (if a TOTAL row exists)
       if (totalRow) {
+        try { totalRow.setAttribute('data-trim-total-row', '1'); } catch {}
+        const totalCells = Array.from(totalRow.querySelectorAll('td,th')) as HTMLElement[];
+        for (const cell of totalCells) {
+          if (TOTAL_RX.test(cell.textContent || '')) {
+            try { cell.setAttribute('data-trim-total', '1'); } catch {}
+          }
+        }
         Array.from(totalRow.querySelectorAll('label.price-choice,input.proposal-price-checkbox'))
           .forEach(el => (el as HTMLElement).remove());
       }
@@ -1489,7 +1499,7 @@ export default function ProposalView({ params }: { params: { id: string } }) {
         const ensureSpan = (): HTMLElement => {
           // Choose the label cell (the one containing TOTAL INVESTMENT:)
           const cells = Array.from(totalRow!.querySelectorAll('td,th')) as HTMLElement[];
-          const labelCell = cells.find(c => /TOTAL\s+INVESTMENT\s*:/i.test(c.textContent || '')) || null;
+          const labelCell = cells.find(c => TOTAL_RX.test(c.textContent || '')) || null;
           const cell = labelCell || (cells.length ? (cells[cells.length - 1] || cells[0]) : (totalRow! as HTMLElement));
           try { (cell as HTMLElement).setAttribute('data-trim-total', '1'); } catch {}
           // Remove any previously injected standalone dollar spans in the entire row

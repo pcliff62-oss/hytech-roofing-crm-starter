@@ -403,6 +403,38 @@ function buildDocxLikeData(snap: AnyDict, view: WebProposal): AnyDict {
     };
     const syntheticOn = !!workDomain?.siding && catPicked("synthetic");
     const syn = (pricing?.siding?.byCategory?.synthetic || pricing?.siding?.synthetic || pricing?.siding || {}) as AnyDict;
+    const sidingTotals = (computed?.sidingTotals || {}) as AnyDict;
+    const rates = ((pricing?.siding?.rates || {}) as AnyDict) || {};
+    const lookupUnit = (catKey: string, src: AnyDict) => {
+      const direct = num(src?.unit);
+      if (direct) return direct;
+      const catRates = (rates?.[catKey] || {}) as AnyDict;
+      const product = src?.product || Object.keys(catRates || {}).find((k) => catRates[k] != null) || "";
+      const rate = product && catRates ? catRates[product] : undefined;
+      if (rate != null) return num(rate);
+      return num(pricing?.siding?.unit || 0);
+    };
+    const readSubtotal = (catKey: string, src: AnyDict) => {
+      const direct = num(sidingTotals?.[catKey]);
+      if (direct) return round2(direct);
+      const stored = num(src?.subtotal);
+      if (stored) return round2(stored);
+      const calcMode = String(src?.calcMode || pricing?.siding?.calcMode || "bySquare");
+      let subtotal = 0;
+      if (calcMode === "manual") {
+        subtotal = num(src?.manualTotal ?? pricing?.siding?.manualTotal ?? 0);
+      } else {
+        const unit = lookupUnit(catKey, src || {});
+        const squares = num(
+          src?.squares ?? pricing?.siding?.squares ?? pricing?.siding?.wallSquares ?? pricing?.siding?.squareFootage ?? 0
+        );
+        subtotal = round2(unit * squares);
+      }
+      const woven = (src?.wovenCorners || {}) as AnyDict;
+      if (woven?.include) subtotal = round2(subtotal + 45 * num(woven?.feet || 0));
+      return round2(subtotal);
+    };
+    const syntheticSubtotal = syntheticOn ? readSubtotal("synthetic", syn) : 0;
     Object.assign(data, {
       show_siding_synthetic: showBool(syntheticOn),
       row_siding_synthetic:  showBool(syntheticOn),
@@ -410,11 +442,11 @@ function buildDocxLikeData(snap: AnyDict, view: WebProposal): AnyDict {
       siding_synthetic_product_label: String(syn.productLabel || syn.product || ""),
       siding_synthetic_exposure: String(syn.exposure || pricing?.siding?.exposure || "").trim(),
       siding_synthetic_color: String(syn.color || scope?.siding?.color || "").trim(),
-  // Ensure synthetic siding total placeholder can populate
-  siding_synthetic_total: moneyStr(num((computed?.primaryTotals || ({} as AnyDict))?.siding || 0)),
-  // Template uses a {siding_synthetic_subtotal} token; expose it and its row flag
-  siding_synthetic_subtotal: moneyStr(num((computed?.primaryTotals || ({} as AnyDict))?.siding || 0)),
-  row_siding_synthetic_subtotal: showBool(syntheticOn && num((computed?.primaryTotals || ({} as AnyDict))?.siding || 0) > 0),
+      // Ensure synthetic siding total placeholder can populate
+      siding_synthetic_total: moneyStr(syntheticSubtotal),
+      // Template uses a {siding_synthetic_subtotal} token; expose it and its row flag
+      siding_synthetic_subtotal: moneyStr(syntheticSubtotal),
+      row_siding_synthetic_subtotal: showBool(syntheticOn),
       row_siding_typar:            showBool(!!scope?.siding?.typar),
       row_siding_vycorTape:        showBool(!!scope?.siding?.vycorTape),
       row_siding_stainlessStaples: showBool(!!scope?.siding?.stainlessStaples),
@@ -513,7 +545,12 @@ function buildDocxLikeData(snap: AnyDict, view: WebProposal): AnyDict {
       }
     }
     // Siding
-    const sidingBase = num(prim?.siding || 0);
+    let sidingBase = num(prim?.siding || 0);
+    if (!sidingBase) {
+      const totals = (computed?.sidingTotals || {}) as AnyDict;
+      const sum = Object.values(totals || {}).reduce((acc: number, value: any) => acc + num(value), 0);
+      if (sum) sidingBase = round2(sum);
+    }
     // Windows & Doors (compute friendly fallbacks and expose row flags)
     const w = (pricing?.windowsAndDoors || {}) as AnyDict;
     const wndComputed = (() => {
